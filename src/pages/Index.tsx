@@ -6,6 +6,7 @@ import { WarningOverlay } from '@/components/game/WarningOverlay';
 import { GameScreen } from '@/components/game/GameScreen';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
 import { AnimatePresence } from 'framer-motion';
+import { toast } from '@/hooks/use-toast';
 
 function GameRouter() {
   const {
@@ -13,6 +14,18 @@ function GameRouter() {
     authenticate, submitDeposit, resetDeposit,
     selectStack, daubNumber, claimBingo, returnToLobby, setPhase,
   } = useGame();
+
+  const handleStackSelect = (id: number) => {
+    const result = selectStack(id);
+    if (!result) return;
+    if (result.action === 'selected') {
+      toast({ title: `✅ You selected card ${result.to}` });
+    } else if (result.action === 'unselected') {
+      toast({ title: `↩️ You unselected card ${result.from}` });
+    } else if (result.action === 'changed') {
+      toast({ title: `🔄 You changed card from ${result.from} to ${result.to}` });
+    }
+  };
 
   switch (state.phase) {
     case 'welcome':
@@ -40,7 +53,7 @@ function GameRouter() {
             user={state.user}
             stats={state.stats}
             canAffordBet={canAffordBet}
-            onSelect={selectStack}
+            onSelect={handleStackSelect}
             onDeposit={() => setPhase('deposit')}
           />
           <AnimatePresence>

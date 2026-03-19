@@ -129,19 +129,35 @@ export function useGameState() {
     setState(s => ({ ...s, depositStatus: 'idle', depositTxHash: '' }));
   }, []);
 
-  // Stack selection
-  const selectStack = useCallback((id: number) => {
+  // Stack selection - returns action info for toast
+  const selectStack = useCallback((id: number): { action: 'selected' | 'unselected' | 'changed'; from?: number; to?: number } | null => {
+    let result: { action: 'selected' | 'unselected' | 'changed'; from?: number; to?: number } | null = null;
     setState(s => {
-      // Check against merged occupied (includes other tabs)
       if (occupiedByOthers.has(id)) {
         hapticImpact('heavy');
         return s;
       }
-      const newStack = s.selectedStack === id ? null : id;
-      broadcastStackSelect(newStack);
-      hapticSelection();
-      return { ...s, selectedStack: newStack };
+      if (s.selectedStack === id) {
+        // Unselect
+        result = { action: 'unselected', from: id };
+        broadcastStackSelect(null);
+        hapticSelection();
+        return { ...s, selectedStack: null };
+      } else if (s.selectedStack !== null) {
+        // Change
+        result = { action: 'changed', from: s.selectedStack, to: id };
+        broadcastStackSelect(id);
+        hapticSelection();
+        return { ...s, selectedStack: id };
+      } else {
+        // Select
+        result = { action: 'selected', to: id };
+        broadcastStackSelect(id);
+        hapticSelection();
+        return { ...s, selectedStack: id };
+      }
     });
+    return result;
   }, [occupiedByOthers, broadcastStackSelect]);
 
   // Lobby timer
@@ -237,7 +253,7 @@ export function useGameState() {
     return () => clearInterval(callRef.current);
   }, [state.phase === 'game']);
 
-  // Manual daub - validated + rate limited
+  // Manual daub - toggle (select/unselect) - validated + rate limited
   const daubNumber = useCallback((num: number) => {
     const valid = numberSchema.safeParse(num);
     if (!valid.success) return;
@@ -245,10 +261,13 @@ export function useGameState() {
 
     setState(s => {
       if (s.isEliminated || s.playerMode !== 'player') return s;
-      if (!s.calledNumbers.some(c => c.number === num)) return s;
       hapticSelection();
       const next = new Set(s.daubedNumbers);
-      next.add(num);
+      if (next.has(num)) {
+        next.delete(num);
+      } else {
+        next.add(num);
+      }
       return { ...s, daubedNumbers: next };
     });
   }, []);

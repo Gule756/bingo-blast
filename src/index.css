@@ -127,4 +127,9 @@
     @apply rounded-2xl bg-gradient-to-b from-white to-blue-50 p-6 text-center shadow-lg;
     border: 2px solid hsl(var(--primary) / 0.2);
   }
+
+  .eliminated-board {
+    border: 2px solid hsl(var(--destructive));
+    box-shadow: inset 0 0 20px hsl(var(--destructive) / 0.3);
+  }
 }
