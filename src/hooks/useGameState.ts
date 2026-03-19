@@ -74,7 +74,10 @@ export function useGameState() {
 
   // Cross-tab player sync (must be called unconditionally)
   const isInGame = state.phase === 'game' && state.playerMode === 'player';
-  const { totalPlayers } = useTabSync(state.user.name || 'Player', isInGame);
+  const { totalPlayers, occupiedByOthers, broadcastStackSelect } = useTabSync(state.user.name || 'Player', isInGame);
+
+  // Merge local occupiedStacks with cross-tab selections
+  const mergedOccupied = new Set([...state.occupiedStacks, ...occupiedByOthers]);
 
   const canAffordBet = state.user.balance >= MIN_BET;
 
