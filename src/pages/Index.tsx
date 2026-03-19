@@ -9,7 +9,7 @@ import { AnimatePresence } from 'framer-motion';
 
 function GameRouter() {
   const {
-    state, canAffordBet, daubedCount,
+    state, mergedOccupied, canAffordBet, daubedCount,
     authenticate, submitDeposit, resetDeposit,
     selectStack, daubNumber, claimBingo, returnToLobby, setPhase,
   } = useGame();
