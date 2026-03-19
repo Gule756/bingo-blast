@@ -2,14 +2,15 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * Cross-tab player synchronization using BroadcastChannel API.
- * Each tab announces itself and responds to pings to maintain an accurate player count.
+ * Syncs: player count, stack selections across tabs.
  */
 
 interface TabMessage {
-  type: 'JOIN' | 'LEAVE' | 'PING' | 'PONG' | 'PLAYER_JOINED' | 'PLAYER_LEFT';
+  type: 'JOIN' | 'LEAVE' | 'PING' | 'PONG' | 'STACK_SELECT' | 'STACK_DESELECT';
   tabId: string;
   playerName?: string;
   isPlayer?: boolean;
+  stackId?: number;
   timestamp: number;
 }
 
@@ -19,8 +20,9 @@ const STALE_TIMEOUT = 5000;
 
 export function useTabSync(playerName: string, isInGame: boolean) {
   const tabId = useRef(`tab_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
-  const [activeTabs, setActiveTabs] = useState<Map<string, { name: string; isPlayer: boolean; lastSeen: number }>>(new Map());
+  const [activeTabs, setActiveTabs] = useState<Map<string, { name: string; isPlayer: boolean; lastSeen: number; stackId: number | null }>>(new Map());
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const currentStackRef = useRef<number | null>(null);
 
   const broadcast = useCallback((msg: Omit<TabMessage, 'tabId' | 'timestamp'>) => {
     try {
@@ -34,6 +36,17 @@ export function useTabSync(playerName: string, isInGame: boolean) {
     }
   }, []);
 
+  // Broadcast stack selection to other tabs
+  const broadcastStackSelect = useCallback((stackId: number | null) => {
+    if (currentStackRef.current !== null) {
+      broadcast({ type: 'STACK_DESELECT', stackId: currentStackRef.current });
+    }
+    currentStackRef.current = stackId;
+    if (stackId !== null) {
+      broadcast({ type: 'STACK_SELECT', stackId, playerName });
+    }
+  }, [broadcast, playerName]);
+
   useEffect(() => {
     try {
       const channel = new BroadcastChannel(CHANNEL_NAME);
@@ -45,6 +58,8 @@ export function useTabSync(playerName: string, isInGame: boolean) {
 
         setActiveTabs(prev => {
           const next = new Map(prev);
+          const existing = next.get(msg.tabId);
+
           switch (msg.type) {
             case 'JOIN':
             case 'PONG':
@@ -52,19 +67,39 @@ export function useTabSync(playerName: string, isInGame: boolean) {
                 name: msg.playerName || 'Unknown',
                 isPlayer: msg.isPlayer || false,
                 lastSeen: Date.now(),
+                stackId: existing?.stackId ?? null,
               });
               break;
             case 'LEAVE':
               next.delete(msg.tabId);
               break;
             case 'PING':
-              // Respond to pings
               broadcast({ type: 'PONG', playerName, isPlayer: isInGame });
               next.set(msg.tabId, {
                 name: msg.playerName || 'Unknown',
                 isPlayer: msg.isPlayer || false,
                 lastSeen: Date.now(),
+                stackId: existing?.stackId ?? null,
               });
+              break;
+            case 'STACK_SELECT':
+              if (existing) {
+                existing.stackId = msg.stackId ?? null;
+                existing.lastSeen = Date.now();
+              } else {
+                next.set(msg.tabId, {
+                  name: msg.playerName || 'Unknown',
+                  isPlayer: false,
+                  lastSeen: Date.now(),
+                  stackId: msg.stackId ?? null,
+                });
+              }
+              break;
+            case 'STACK_DESELECT':
+              if (existing) {
+                existing.stackId = null;
+                existing.lastSeen = Date.now();
+              }
               break;
           }
           return next;
@@ -73,13 +108,11 @@ export function useTabSync(playerName: string, isInGame: boolean) {
 
       // Announce self
       broadcast({ type: 'JOIN', playerName, isPlayer: isInGame });
-      // Ping to discover others
       broadcast({ type: 'PING', playerName, isPlayer: isInGame });
 
       // Heartbeat
       const heartbeat = setInterval(() => {
         broadcast({ type: 'PING', playerName, isPlayer: isInGame });
-        // Prune stale tabs
         setActiveTabs(prev => {
           const next = new Map(prev);
           const now = Date.now();
@@ -90,24 +123,27 @@ export function useTabSync(playerName: string, isInGame: boolean) {
         });
       }, HEARTBEAT_INTERVAL);
 
-      // Cleanup
       return () => {
         broadcast({ type: 'LEAVE' });
+        if (currentStackRef.current !== null) {
+          broadcast({ type: 'STACK_DESELECT', stackId: currentStackRef.current });
+        }
         clearInterval(heartbeat);
         channel.close();
         channelRef.current = null;
       };
     } catch {
-      // BroadcastChannel not supported - fallback to single tab
       return undefined;
     }
   }, [playerName, isInGame, broadcast]);
 
-  // Total players = other tabs + self
-  const totalPlayers = activeTabs.size + 1;
-  const activePlayerNames = Array.from(activeTabs.values())
-    .filter(t => t.isPlayer)
-    .map(t => t.name);
+  // Occupied stacks from OTHER tabs
+  const occupiedByOthers = new Set<number>();
+  for (const [, info] of activeTabs) {
+    if (info.stackId !== null) occupiedByOthers.add(info.stackId);
+  }
 
-  return { totalPlayers, activePlayerNames, tabId: tabId.current };
+  const totalPlayers = activeTabs.size + 1;
+
+  return { totalPlayers, occupiedByOthers, broadcastStackSelect, tabId: tabId.current };
 }

@@ -31,12 +31,7 @@ function generateBingoCard(stackId: number): BingoCard {
   return { id: stackId, numbers: grid };
 }
 
-function generateOccupied(): Set<number> {
-  const s = new Set<number>();
-  const count = Math.floor(Math.random() * 30) + 10;
-  while (s.size < count) s.add(Math.floor(Math.random() * 200) + 1);
-  return s;
-}
+// No more fake occupied stacks - only real players from other tabs
 
 const LOBBY_TIME = 30;
 const WARNING_TIME = 5;
@@ -56,7 +51,7 @@ export function useGameState() {
     timer: LOBBY_TIME,
     playerMode: 'spectator',
     selectedStack: null,
-    occupiedStacks: generateOccupied(),
+    occupiedStacks: new Set<number>(),
     bingoCard: null,
     calledNumbers: [],
     daubedNumbers: new Set([0]),
@@ -79,7 +74,10 @@ export function useGameState() {
 
   // Cross-tab player sync (must be called unconditionally)
   const isInGame = state.phase === 'game' && state.playerMode === 'player';
-  const { totalPlayers } = useTabSync(state.user.name || 'Player', isInGame);
+  const { totalPlayers, occupiedByOthers, broadcastStackSelect } = useTabSync(state.user.name || 'Player', isInGame);
+
+  // Merge local occupiedStacks with cross-tab selections
+  const mergedOccupied = new Set([...state.occupiedStacks, ...occupiedByOthers]);
 
   const canAffordBet = state.user.balance >= MIN_BET;
 
@@ -134,14 +132,17 @@ export function useGameState() {
   // Stack selection
   const selectStack = useCallback((id: number) => {
     setState(s => {
-      if (s.occupiedStacks.has(id)) {
+      // Check against merged occupied (includes other tabs)
+      if (occupiedByOthers.has(id)) {
         hapticImpact('heavy');
         return s;
       }
+      const newStack = s.selectedStack === id ? null : id;
+      broadcastStackSelect(newStack);
       hapticSelection();
-      return { ...s, selectedStack: s.selectedStack === id ? null : id };
+      return { ...s, selectedStack: newStack };
     });
-  }, []);
+  }, [occupiedByOthers, broadcastStackSelect]);
 
   // Lobby timer
   useEffect(() => {
@@ -150,7 +151,7 @@ export function useGameState() {
       ...s,
       timer: LOBBY_TIME,
       selectedStack: null,
-      occupiedStacks: generateOccupied(),
+      occupiedStacks: new Set<number>(),
       dummyWinRound: Math.random() < DUMMY_WIN_CHANCE,
     }));
     timerRef.current = setInterval(() => {
@@ -314,17 +315,17 @@ export function useGameState() {
   const daubedCount = state.daubedNumbers.size - 1;
 
   // Sync cross-tab player count into stats
+  // Sync cross-tab player count (no fake base players anymore)
   useEffect(() => {
     setState(s => {
-      const basePlayers = 8; // simulated base players
-      const newCount = basePlayers + totalPlayers;
-      if (s.stats.players === newCount) return s;
-      return { ...s, stats: { ...s.stats, players: newCount } };
+      if (s.stats.players === totalPlayers) return s;
+      return { ...s, stats: { ...s.stats, players: totalPlayers } };
     });
   }, [totalPlayers]);
 
   return {
     state,
+    mergedOccupied,
     canAffordBet,
     daubedCount,
     totalPlayers,

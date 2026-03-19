@@ -9,7 +9,7 @@ import { AnimatePresence } from 'framer-motion';
 
 function GameRouter() {
   const {
-    state, canAffordBet, daubedCount,
+    state, mergedOccupied, canAffordBet, daubedCount,
     authenticate, submitDeposit, resetDeposit,
     selectStack, daubNumber, claimBingo, returnToLobby, setPhase,
   } = useGame();
@@ -36,7 +36,7 @@ function GameRouter() {
           <LobbyScreen
             timer={state.timer}
             selectedStack={state.selectedStack}
-            occupiedStacks={state.occupiedStacks}
+            occupiedStacks={mergedOccupied}
             user={state.user}
             stats={state.stats}
             canAffordBet={canAffordBet}
