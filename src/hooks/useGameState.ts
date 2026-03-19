@@ -315,17 +315,17 @@ export function useGameState() {
   const daubedCount = state.daubedNumbers.size - 1;
 
   // Sync cross-tab player count into stats
+  // Sync cross-tab player count (no fake base players anymore)
   useEffect(() => {
     setState(s => {
-      const basePlayers = 8; // simulated base players
-      const newCount = basePlayers + totalPlayers;
-      if (s.stats.players === newCount) return s;
-      return { ...s, stats: { ...s.stats, players: newCount } };
+      if (s.stats.players === totalPlayers) return s;
+      return { ...s, stats: { ...s.stats, players: totalPlayers } };
     });
   }, [totalPlayers]);
 
   return {
     state,
+    mergedOccupied,
     canAffordBet,
     daubedCount,
     totalPlayers,
@@ -338,4 +338,5 @@ export function useGameState() {
     returnToLobby,
     setPhase,
   };
+}
 }
