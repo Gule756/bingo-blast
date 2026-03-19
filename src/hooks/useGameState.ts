@@ -103,22 +103,23 @@ export function useGameState() {
     }));
   }, []);
 
-  // Deposit: simulate TxHash verification
-  const submitDeposit = useCallback((txHash: string) => {
+  // Deposit: validate TxHash format
+  const submitDeposit = useCallback((rawHash: string) => {
+    const result = txHashSchema.safeParse(rawHash);
+    if (!result.success) {
+      hapticNotification('error');
+      setState(s => ({ ...s, depositStatus: 'error' }));
+      return;
+    }
+    const txHash = result.data;
     setState(s => ({ ...s, depositTxHash: txHash, depositStatus: 'verifying' }));
-    // Simulate backend verification (2s)
     setTimeout(() => {
       setState(s => {
         if (s.depositStatus !== 'verifying') return s;
-        // 80% chance of valid hash for demo
         const valid = Math.random() > 0.2;
         if (valid) {
           hapticNotification('success');
-          return {
-            ...s,
-            depositStatus: 'success',
-            user: { ...s.user, balance: s.user.balance + 50 },
-          };
+          return { ...s, depositStatus: 'success', user: { ...s.user, balance: s.user.balance + 50 } };
         }
         hapticNotification('error');
         return { ...s, depositStatus: 'error' };
