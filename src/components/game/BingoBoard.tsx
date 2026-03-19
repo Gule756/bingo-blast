@@ -10,7 +10,12 @@ interface BingoBoardProps {
 
 export function BingoBoard({ card, daubedNumbers, isEliminated, onDaub }: BingoBoardProps) {
   return (
-    <div className={`rounded-xl bg-card p-3 ${isEliminated ? 'opacity-50' : ''}`}>
+    <div className={`rounded-xl bg-card p-3 relative ${isEliminated ? 'eliminated-board' : ''}`}>
+      {isEliminated && (
+        <div className="absolute inset-0 rounded-xl bg-destructive/30 backdrop-blur-[2px] z-10 flex items-center justify-center">
+          <span className="text-lg font-black text-destructive-foreground drop-shadow-lg">❌ ELIMINATED</span>
+        </div>
+      )}
       <div className="mb-1 text-center text-xs text-muted-foreground">Board #{card.id}</div>
 
       {/* Header */}
@@ -22,7 +27,7 @@ export function BingoBoard({ card, daubedNumbers, isEliminated, onDaub }: BingoB
         ))}
       </div>
 
-      {/* Grid - NO visual hint for called numbers; player must pay attention */}
+      {/* Grid */}
       <div className="grid grid-cols-5 gap-1">
         {card.numbers.flatMap((row, r) =>
           row.map((num, c) => {

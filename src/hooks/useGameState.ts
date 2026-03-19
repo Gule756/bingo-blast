@@ -253,7 +253,7 @@ export function useGameState() {
     return () => clearInterval(callRef.current);
   }, [state.phase === 'game']);
 
-  // Manual daub - validated + rate limited
+  // Manual daub - toggle (select/unselect) - validated + rate limited
   const daubNumber = useCallback((num: number) => {
     const valid = numberSchema.safeParse(num);
     if (!valid.success) return;
@@ -261,10 +261,13 @@ export function useGameState() {
 
     setState(s => {
       if (s.isEliminated || s.playerMode !== 'player') return s;
-      if (!s.calledNumbers.some(c => c.number === num)) return s;
       hapticSelection();
       const next = new Set(s.daubedNumbers);
-      next.add(num);
+      if (next.has(num)) {
+        next.delete(num);
+      } else {
+        next.add(num);
+      }
       return { ...s, daubedNumbers: next };
     });
   }, []);
