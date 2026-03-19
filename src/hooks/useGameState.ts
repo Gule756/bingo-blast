@@ -31,7 +31,7 @@ function generateBingoCard(stackId: number): BingoCard {
   return { id: stackId, numbers: grid };
 }
 
-// No more fake occupied stacks - only real players from other tabs
+// Stacks are only occupied by real players from other tabs (via BroadcastChannel)
 
 const LOBBY_TIME = 30;
 const WARNING_TIME = 5;
