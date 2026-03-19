@@ -51,7 +51,7 @@ export function useGameState() {
     timer: LOBBY_TIME,
     playerMode: 'spectator',
     selectedStack: null,
-    occupiedStacks: generateOccupied(),
+    occupiedStacks: new Set<number>(),
     bingoCard: null,
     calledNumbers: [],
     daubedNumbers: new Set([0]),
