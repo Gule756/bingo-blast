@@ -132,14 +132,17 @@ export function useGameState() {
   // Stack selection
   const selectStack = useCallback((id: number) => {
     setState(s => {
-      if (s.occupiedStacks.has(id)) {
+      // Check against merged occupied (includes other tabs)
+      if (occupiedByOthers.has(id)) {
         hapticImpact('heavy');
         return s;
       }
+      const newStack = s.selectedStack === id ? null : id;
+      broadcastStackSelect(newStack);
       hapticSelection();
-      return { ...s, selectedStack: s.selectedStack === id ? null : id };
+      return { ...s, selectedStack: newStack };
     });
-  }, []);
+  }, [occupiedByOthers, broadcastStackSelect]);
 
   // Lobby timer
   useEffect(() => {
