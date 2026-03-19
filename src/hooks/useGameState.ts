@@ -311,12 +311,23 @@ export function useGameState() {
     }));
   }, []);
 
-  const daubedCount = state.daubedNumbers.size - 1; // exclude free space marker
+  const daubedCount = state.daubedNumbers.size - 1;
+
+  // Sync cross-tab player count into stats
+  useEffect(() => {
+    setState(s => {
+      const basePlayers = 8; // simulated base players
+      const newCount = basePlayers + totalPlayers;
+      if (s.stats.players === newCount) return s;
+      return { ...s, stats: { ...s.stats, players: newCount } };
+    });
+  }, [totalPlayers]);
 
   return {
     state,
     canAffordBet,
     daubedCount,
+    totalPlayers,
     authenticate,
     submitDeposit,
     resetDeposit,
