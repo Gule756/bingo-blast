@@ -87,8 +87,14 @@ export function useGameState() {
     setState(s => ({ ...s, phase }));
   }, []);
 
-  // Auth: simulate Telegram contact sharing
-  const authenticate = useCallback((name: string) => {
+  // Auth: validate + sanitize name
+  const authenticate = useCallback((rawName: string) => {
+    const result = playerNameSchema.safeParse(rawName);
+    if (!result.success) {
+      hapticNotification('error');
+      return;
+    }
+    const name = result.data;
     hapticNotification('success');
     setState(s => ({
       ...s,
