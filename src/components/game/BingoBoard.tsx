@@ -3,7 +3,6 @@ import { BingoCard, BINGO_LETTERS, CalledNumber, getLetterColor } from '@/types/
 
 interface BingoBoardProps {
   card: BingoCard;
-  calledNumbers: CalledNumber[];
   daubedNumbers: Set<number>;
   isEliminated: boolean;
   onDaub: (num: number) => void;
