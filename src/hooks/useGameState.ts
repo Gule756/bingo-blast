@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  GameState, GamePhase, BingoCard, CalledNumber,
+  GameState, GamePhase, BingoCard, CalledNumber, WinPattern,
   getLetterForNumber, MIN_BET, DUMMY_WIN_CHANCE, DUMMY_NAMES,
 } from '@/types/game';
 import { hapticImpact, hapticNotification, hapticSelection } from '@/lib/haptic';
@@ -57,6 +57,7 @@ export function useGameState() {
     daubedNumbers: new Set([0]),
     isEliminated: false,
     winner: null,
+    winPattern: null,
     user: { ...DEFAULT_USER },
     stats: { players: 9, bet: 10, callCount: 0 },
     dummyWinRound: false,
@@ -272,20 +273,26 @@ export function useGameState() {
     });
   }, []);
 
-  // Check bingo patterns
-  const checkBingo = useCallback((): boolean => {
+  // Check bingo patterns - returns the winning pattern or null
+  const checkBingo = useCallback((): WinPattern => {
     const s = state;
-    if (!s.bingoCard) return false;
+    if (!s.bingoCard) return null;
     const grid = s.bingoCard.numbers;
     const isDaubed = (r: number, c: number) =>
       (r === 2 && c === 2) || (grid[r][c] !== null && s.daubedNumbers.has(grid[r][c]!));
 
-    for (let r = 0; r < 5; r++) if ([0,1,2,3,4].every(c => isDaubed(r, c))) return true;
-    for (let c = 0; c < 5; c++) if ([0,1,2,3,4].every(r => isDaubed(r, c))) return true;
-    if ([0,1,2,3,4].every(i => isDaubed(i, i))) return true;
-    if ([0,1,2,3,4].every(i => isDaubed(i, 4-i))) return true;
-    if (isDaubed(0,0) && isDaubed(0,4) && isDaubed(4,0) && isDaubed(4,4)) return true;
-    return false;
+    // Full House (all cells)
+    if (grid.every((row, r) => row.every((_, c) => isDaubed(r, c)))) return 'Full House';
+    // Rows
+    for (let r = 0; r < 5; r++) if ([0,1,2,3,4].every(c => isDaubed(r, c))) return 'Row';
+    // Columns
+    for (let c = 0; c < 5; c++) if ([0,1,2,3,4].every(r => isDaubed(r, c))) return 'Column';
+    // Diagonals
+    if ([0,1,2,3,4].every(i => isDaubed(i, i))) return 'Diagonal';
+    if ([0,1,2,3,4].every(i => isDaubed(i, 4-i))) return 'Diagonal';
+    // Four Corners
+    if (isDaubed(0,0) && isDaubed(0,4) && isDaubed(4,0) && isDaubed(4,4)) return 'Four Corners';
+    return null;
   }, [state]);
 
   // Claim bingo - rate limited + integrity verified
@@ -299,7 +306,8 @@ export function useGameState() {
       return;
     }
 
-    if (checkBingo()) {
+    const pattern = checkBingo();
+    if (pattern) {
       clearInterval(callRef.current);
       hapticNotification('success');
       const prize = state.stats.bet * state.stats.players * 0.9;
@@ -307,6 +315,7 @@ export function useGameState() {
         ...s,
         phase: 'gameover',
         winner: s.user.name || 'You',
+        winPattern: pattern,
         user: { ...s.user, balance: s.user.balance + prize, totalWins: s.user.totalWins + 1 },
       }));
     } else {
@@ -327,6 +336,7 @@ export function useGameState() {
       isEliminated: false,
       playerMode: 'spectator',
       winner: null,
+      winPattern: null,
       stats: { ...s.stats, callCount: 0 },
     }));
   }, []);
