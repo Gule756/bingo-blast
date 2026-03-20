@@ -31,6 +31,7 @@ export interface GameState {
   daubedNumbers: Set<number>;
   isEliminated: boolean;
   winner: string | null;
+  winPattern: WinPattern;
   user: UserProfile;
   stats: {
     players: number;
