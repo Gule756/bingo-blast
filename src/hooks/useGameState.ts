@@ -6,6 +6,7 @@ import {
 import { hapticImpact, hapticNotification, hapticSelection } from '@/lib/haptic';
 import { sanitizeInput, playerNameSchema, txHashSchema, numberSchema, RateLimiter, validateGameIntegrity } from '@/lib/security';
 import { useTabSync } from './useTabSync';
+import { supabase } from '@/integrations/supabase/client';
 
 function generateBingoCard(stackId: number): BingoCard {
   const ranges = [[1,15],[16,30],[31,45],[46,60],[61,75]];
