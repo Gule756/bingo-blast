@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BingoCard, BINGO_LETTERS, getLetterColor, DUMMY_NAMES } from '@/types/game';
+import { BingoCard, BINGO_LETTERS, getLetterColor, DUMMY_NAMES, WinPattern } from '@/types/game';
 
 interface GameOverScreenProps {
   winner: string | null;
+  winPattern: WinPattern;
   card: BingoCard | null;
   daubedNumbers: Set<number>;
   stats: { bet: number; players: number };
@@ -11,10 +12,11 @@ interface GameOverScreenProps {
   onReturn: () => void;
 }
 
-export function GameOverScreen({ winner, card, daubedNumbers, stats, balance, onReturn }: GameOverScreenProps) {
+export function GameOverScreen({ winner, winPattern, card, daubedNumbers, stats, balance, onReturn }: GameOverScreenProps) {
   const [countdown, setCountdown] = useState(10);
   const prize = stats.bet * stats.players * 0.9;
   const isDummy = winner ? DUMMY_NAMES.includes(winner) : false;
+  const isRealWinner = winner && !isDummy;
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -38,6 +40,19 @@ export function GameOverScreen({ winner, card, daubedNumbers, stats, balance, on
           <p className="mb-1 text-lg font-bold text-accent">
             {isDummy ? `User ${winner} has won!` : `${winner} wins!`}
           </p>
+
+          {/* Winning pattern badge - always shown in blue */}
+          {winPattern && isRealWinner && (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mb-3 rounded-full border-2 border-blue-500 bg-blue-500/15 px-5 py-1.5"
+            >
+              <span className="text-sm font-bold text-blue-500">{winPattern}</span>
+            </motion.div>
+          )}
+
           {!isDummy && (
             <div className="mb-4 rounded-xl border-2 border-accent bg-accent/10 px-6 py-3 text-center">
               <div className="text-sm text-muted-foreground">Prize Won</div>
@@ -55,12 +70,20 @@ export function GameOverScreen({ winner, card, daubedNumbers, stats, balance, on
         <p className="text-2xl font-black text-foreground">{balance} ETB</p>
       </div>
 
-      {card && !isDummy && (
+      {card && isRealWinner && (
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className="mb-4 w-full max-w-xs rounded-2xl border-4 border-bingo-g bg-bingo-g/5 p-4"
         >
+          <div className="mb-1 flex items-center justify-between px-1">
+            <span className="text-sm font-bold text-foreground">{winner}</span>
+            {winPattern && (
+              <span className="rounded-full bg-blue-500/15 px-3 py-0.5 text-xs font-bold text-blue-500">
+                {winPattern}
+              </span>
+            )}
+          </div>
           <div className="mb-2 rounded bg-card px-3 py-1 text-center text-xs font-bold text-muted-foreground">
             Board #{card.id}
           </div>
@@ -88,6 +111,7 @@ export function GameOverScreen({ winner, card, daubedNumbers, stats, balance, on
         <motion.div key={countdown} initial={{ scale: 1.3 }} animate={{ scale: 1 }} className="my-2 flex h-14 w-14 mx-auto items-center justify-center rounded-xl bg-primary text-2xl font-black text-primary-foreground">
           {countdown}
         </motion.div>
+        <p className="text-xs text-muted-foreground">All players return together at the same time</p>
       </div>
     </div>
   );
