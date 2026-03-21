@@ -339,8 +339,8 @@ export function useGameState() {
       return;
     }
 
-    const pattern = checkBingo();
-    if (pattern) {
+    const result = checkBingo();
+    if (result.pattern) {
       clearInterval(callRef.current);
       hapticNotification('success');
       const prize = state.stats.bet * state.stats.players * 0.9;
@@ -348,7 +348,8 @@ export function useGameState() {
         ...s,
         phase: 'gameover',
         winner: s.user.name || 'You',
-        winPattern: pattern,
+        winPattern: result.pattern,
+        winningCells: result.cells,
         user: { ...s.user, balance: s.user.balance + prize, totalWins: s.user.totalWins + 1 },
       }));
     } else {
