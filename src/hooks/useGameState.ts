@@ -249,7 +249,7 @@ export function useGameState() {
           clearInterval(callRef.current);
           const dummyName = DUMMY_NAMES[Math.floor(Math.random() * DUMMY_NAMES.length)];
           hapticNotification('warning');
-          return { ...s, phase: 'gameover', winner: dummyName };
+          return { ...s, phase: 'gameover', winner: dummyName, winningCells: [] };
         }
 
         let num: number;
