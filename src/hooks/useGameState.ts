@@ -371,6 +371,7 @@ export function useGameState() {
       playerMode: 'spectator',
       winner: null,
       winPattern: null,
+      winningCells: [],
       stats: { ...s.stats, callCount: 0 },
     }));
   }, []);
