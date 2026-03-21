@@ -59,6 +59,7 @@ export function useGameState() {
     isEliminated: false,
     winner: null,
     winPattern: null,
+    winningCells: [],
     user: { ...DEFAULT_USER },
     stats: { players: 9, bet: 10, callCount: 0 },
     dummyWinRound: false,
