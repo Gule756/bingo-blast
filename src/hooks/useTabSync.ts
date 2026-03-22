@@ -17,7 +17,7 @@ export function useTabSync(playerName: string, isInGame: boolean) {
   const tabId = useRef(`tab_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
   const [activeTabs, setActiveTabs] = useState<Map<string, { name: string; isPlayer: boolean; lastSeen: number; stackIds: Set<number> }>>(new Map());
   const channelRef = useRef<BroadcastChannel | null>(null);
-  const currentStacksRef = useRef<Set<number>>(new Set());
+  const currentStacksRef = useRef(new Set<number>());
 
   const broadcast = useCallback((msg: Omit<TabMessage, 'tabId' | 'timestamp'>) => {
     try {
