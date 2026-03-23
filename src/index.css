@@ -88,6 +88,17 @@
     background: hsl(var(--cell-default));
     @apply text-foreground;
   }
+  /* Current number being called - YELLOW */
+  .cell-current-call {
+    background: hsl(45 93% 50%);
+    @apply text-primary-foreground font-bold ring-1 ring-yellow-300;
+  }
+  /* Previously called numbers - GREEN */
+  .cell-called-prev {
+    background: hsl(142 71% 45%);
+    @apply text-accent-foreground font-bold;
+  }
+  /* Legacy: keep for bingo board daubed cells */
   .cell-called {
     background: hsl(var(--cell-called));
     @apply text-primary-foreground font-bold;

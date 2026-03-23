@@ -1,17 +1,20 @@
 import { GameProvider, useGame } from '@/context/GameContext';
 import { WelcomeScreen } from '@/components/game/WelcomeScreen';
+import { StakeSelectionScreen } from '@/components/game/StakeSelectionScreen';
 import { DepositScreen } from '@/components/game/DepositScreen';
 import { LobbyScreen } from '@/components/game/LobbyScreen';
 import { WarningOverlay } from '@/components/game/WarningOverlay';
 import { GameScreen } from '@/components/game/GameScreen';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
+import { ProfileScreen } from '@/components/game/ProfileScreen';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from '@/hooks/use-toast';
 
 function GameRouter() {
   const {
     state, mergedOccupied, canAffordBet, daubedCount,
-    authenticate, submitDeposit, resetDeposit,
+    authenticate, selectStake, createGame, joinGame,
+    submitDeposit, resetDeposit,
     selectStack, daubNumber, claimBingo, returnToLobby, setPhase,
   } = useGame();
 
@@ -33,6 +36,28 @@ function GameRouter() {
     case 'welcome':
       return <WelcomeScreen onAuthenticate={(name, phone) => authenticate(name, phone)} />;
 
+    case 'stakeSelect':
+      return (
+        <StakeSelectionScreen
+          balance={state.user.balance}
+          userName={state.user.name}
+          onSelectStake={selectStake}
+          onCreateGame={(stake, countdown) => createGame(stake, countdown)}
+          onJoinGame={(gameId, stake) => joinGame(gameId, stake)}
+          onDeposit={() => setPhase('deposit')}
+          onProfile={() => setPhase('profile')}
+        />
+      );
+
+    case 'profile':
+      return (
+        <ProfileScreen
+          user={state.user}
+          onBack={() => setPhase('stakeSelect')}
+          onDeposit={() => setPhase('deposit')}
+        />
+      );
+
     case 'deposit':
       return (
         <DepositScreen
@@ -40,7 +65,7 @@ function GameRouter() {
           status={state.depositStatus}
           onSubmit={submitDeposit}
           onReset={resetDeposit}
-          onBack={() => setPhase('lobby')}
+          onBack={() => setPhase('stakeSelect')}
         />
       );
 
@@ -79,6 +104,7 @@ function GameRouter() {
       return (
         <GameOverScreen
           winner={state.winner}
+          winnerCount={state.winnerCount}
           winPattern={state.winPattern}
           winningCells={state.winningCells}
           winningCardId={state.winningCardId}
