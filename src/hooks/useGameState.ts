@@ -434,7 +434,10 @@ export function useGameState() {
     if (result.pattern) {
       clearInterval(callRef.current);
       hapticNotification('success');
-      const prize = state.stats.bet * state.stats.players * 0.9;
+      // Prize pool = total cards in game * bet * 0.9 (10% house fee)
+      // At minimum, player's own cards contribute to the pot
+      const totalCardsInGame = Math.max(state.stats.players, 1) * state.bingoCards.length;
+      const prize = state.stats.bet * totalCardsInGame * 0.9;
       setState(s => ({
         ...s,
         phase: 'gameover',

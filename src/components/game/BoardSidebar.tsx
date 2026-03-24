@@ -3,9 +3,10 @@ import { CalledNumber, BINGO_LETTERS, getLetterColor } from '@/types/game';
 interface BoardSidebarProps {
   calledNumbers: CalledNumber[];
   boardSize?: number;
+  compact?: boolean;
 }
 
-export function BoardSidebar({ calledNumbers, boardSize = 75 }: BoardSidebarProps) {
+export function BoardSidebar({ calledNumbers, boardSize = 75, compact }: BoardSidebarProps) {
   const calledSet = new Set(calledNumbers.map(c => c.number));
   const currentNumber = calledNumbers.length > 0 ? calledNumbers[calledNumbers.length - 1].number : null;
   const ranges: [number, number][] = [[1,15],[16,30],[31,45],[46,60],[61,75]];
