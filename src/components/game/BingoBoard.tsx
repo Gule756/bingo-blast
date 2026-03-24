@@ -6,6 +6,7 @@ interface BingoBoardProps {
   daubedNumbers: Set<number>;
   isEliminated: boolean;
   onDaub: (num: number) => void;
+  compact?: boolean;
 }
 
 export function BingoBoard({ card, daubedNumbers, isEliminated, onDaub }: BingoBoardProps) {

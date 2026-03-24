@@ -24,8 +24,10 @@ function GameRouter() {
     if (result.action === 'selected') {
       if (result.totalSelected === 1) {
         toast({ title: `✅ You selected card ${result.cardId}` });
-      } else {
-        toast({ title: `✅ You chose a ${ordinal(result.totalSelected)} card: ${result.cardId}` });
+      } else if (result.totalSelected === 2) {
+        toast({ title: `✅ You selected a second card ${result.cardId}` });
+      } else if (result.totalSelected === 3) {
+        toast({ title: `✅ You selected a third card ${result.cardId}` });
       }
     } else if (result.action === 'unselected') {
       toast({ title: `↩️ You unselected card ${result.cardId}` });
