@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { memo } from 'react';
 import { BingoCard, BINGO_LETTERS, getLetterColor } from '@/types/game';
 
 interface BingoBoardProps {
@@ -11,9 +10,9 @@ interface BingoBoardProps {
   extraCompact?: boolean;
 }
 
-export const BingoBoard = memo(({ card, daubedNumbers, isEliminated, onDaub, compact, extraCompact }: BingoBoardProps) => {
-  const cellSize = extraCompact ? 'h-6 text-[10px]' : compact ? 'h-9 text-xs' : 'h-12 text-sm';
-  const headerSize = extraCompact ? 'h-5 text-[9px]' : compact ? 'h-7 text-[11px]' : 'h-9 text-sm';
+export function BingoBoard({ card, daubedNumbers, isEliminated, onDaub, compact, extraCompact }: BingoBoardProps) {
+  const cellSize = extraCompact ? 'h-5 text-[8px]' : compact ? 'h-8 text-[10px]' : 'h-12 text-sm';
+  const headerSize = extraCompact ? 'h-4 text-[8px]' : compact ? 'h-6 text-[10px]' : 'h-9 text-sm';
   const isSmall = compact || extraCompact;
 
   return (
@@ -25,38 +24,36 @@ export const BingoBoard = memo(({ card, daubedNumbers, isEliminated, onDaub, com
       )}
       {!extraCompact && <div className={`${isSmall ? 'mb-0.5 text-[9px]' : 'mb-1 text-xs'} text-center text-muted-foreground`}>Board #{card.id}</div>}
 
-      <div className="p-1 flex flex-col gap-1">
-        {/* Header */}
-        <div className="grid grid-cols-5 gap-1">
-          {BINGO_LETTERS.map(l => (
-            <div key={l} className={`${getLetterColor(l)} flex ${headerSize} items-center justify-center rounded-md font-bold`}>
-              {l}
-            </div>
-          ))}
-        </div>
+      {/* Header */}
+      <div className="mb-0.5 grid grid-cols-5 gap-0.5">
+        {BINGO_LETTERS.map(l => (
+          <div key={l} className={`${getLetterColor(l)} flex ${headerSize} items-center justify-center rounded-md font-bold`}>
+            {l}
+          </div>
+        ))}
+      </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-5 gap-1">
-          {card.numbers.flatMap((row, r) =>
-            row.map((num, c) => {
-              const isFree = r === 2 && c === 2;
-              const isDaubed = isFree || (num !== null && daubedNumbers.has(num));
-              const cellClass = isDaubed ? 'cell-daubed' : 'cell-default';
+      {/* Grid */}
+      <div className="grid grid-cols-5 gap-0.5">
+        {card.numbers.flatMap((row, r) =>
+          row.map((num, c) => {
+            const isFree = r === 2 && c === 2;
+            const isDaubed = isFree || (num !== null && daubedNumbers.has(num));
+            const cellClass = isDaubed ? 'cell-daubed' : 'cell-default';
 
-              return (
-                <motion.button
-                  key={`${r}-${c}`}
-                  whileTap={!isEliminated && !isFree ? { scale: 0.9 } : {}}
-                  onClick={() => num !== null && !isFree && !isEliminated && onDaub(num)}
-                  className={`${cellClass} flex ${cellSize} items-center justify-center rounded-md font-semibold transition-colors`}
-                >
-                  {isFree ? '★' : num}
-                </motion.button>
-              );
-            })
-          )}
-        </div>
+            return (
+              <motion.button
+                key={`${r}-${c}`}
+                whileTap={!isEliminated && !isFree ? { scale: 0.9 } : {}}
+                onClick={() => num !== null && !isFree && !isEliminated && onDaub(num)}
+                className={`${cellClass} flex ${cellSize} items-center justify-center rounded-md font-semibold transition-colors`}
+              >
+                {isFree ? '★' : num}
+              </motion.button>
+            );
+          })
+        )}
       </div>
     </div>
   );
-});
+}
