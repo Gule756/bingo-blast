@@ -73,7 +73,7 @@ export function GameScreen({ state, daubedCount, onDaub, onClaim, onClose }: Gam
       {cardCount === 2 && (
         <div className="flex flex-1 flex-col gap-0.5 overflow-hidden px-1 pb-1">
           {/* Top section: horizontal board + compact caller */}
-          <div className="flex gap-1 shrink-0" style={{ height: '26%' }}>
+          <div className="flex gap-1 shrink-0" style={{ height: '22%' }}>
             <div className="flex-1 overflow-hidden">
               <BoardSidebar calledNumbers={state.calledNumbers} compact horizontal />
             </div>

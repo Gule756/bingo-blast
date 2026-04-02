@@ -11,8 +11,8 @@ interface BingoBoardProps {
 }
 
 export function BingoBoard({ card, daubedNumbers, isEliminated, onDaub, compact, extraCompact }: BingoBoardProps) {
-  const cellSize = extraCompact ? 'h-6 text-[9px]' : compact ? 'h-8 text-[10px]' : 'h-12 text-sm';
-  const headerSize = extraCompact ? 'h-5 text-[9px]' : compact ? 'h-6 text-[10px]' : 'h-9 text-sm';
+  const cellSize = extraCompact ? 'h-5 text-[8px]' : compact ? 'h-8 text-[10px]' : 'h-12 text-sm';
+  const headerSize = extraCompact ? 'h-4 text-[8px]' : compact ? 'h-6 text-[10px]' : 'h-9 text-sm';
   const isSmall = compact || extraCompact;
 
   return (
