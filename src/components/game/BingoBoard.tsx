@@ -16,13 +16,13 @@ export function BingoBoard({ card, daubedNumbers, isEliminated, onDaub, compact,
   const isSmall = compact || extraCompact;
 
   return (
-    <div className={`rounded-xl bg-card ${compact ? 'p-1.5' : 'p-3'} relative ${isEliminated ? 'eliminated-board' : ''}`}>
+    <div className={`rounded-xl bg-card ${isSmall ? 'p-1' : 'p-3'} relative ${isEliminated ? 'eliminated-board' : ''} flex-1 min-h-0 flex flex-col`}>
       {isEliminated && (
         <div className="absolute inset-0 rounded-xl bg-destructive/30 backdrop-blur-[2px] z-10 flex items-center justify-center">
-          <span className={`${compact ? 'text-xs' : 'text-lg'} font-black text-destructive-foreground drop-shadow-lg`}>❌ ELIMINATED</span>
+          <span className={`${isSmall ? 'text-xs' : 'text-lg'} font-black text-destructive-foreground drop-shadow-lg`}>❌ ELIMINATED</span>
         </div>
       )}
-      <div className={`${compact ? 'mb-0.5 text-[9px]' : 'mb-1 text-xs'} text-center text-muted-foreground`}>Board #{card.id}</div>
+      {!extraCompact && <div className={`${isSmall ? 'mb-0.5 text-[9px]' : 'mb-1 text-xs'} text-center text-muted-foreground`}>Board #{card.id}</div>}
 
       {/* Header */}
       <div className="mb-0.5 grid grid-cols-5 gap-0.5">
