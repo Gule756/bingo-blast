@@ -4,7 +4,7 @@ import {
   getLetterForNumber, MIN_BET, DUMMY_WIN_CHANCE, DUMMY_NAMES,
 } from '@/types/game';
 import { hapticImpact, hapticNotification, hapticSelection } from '@/lib/haptic';
-import { playerNameSchema, txHashSchema, numberSchema, RateLimiter, validateGameIntegrity } from '@/lib/security';
+import { playerNameSchema, txHashSchema, numberSchema, RateLimiter } from '@/lib/security';
 import { useTabSync } from './useTabSync';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -374,8 +374,13 @@ export function useGameState() {
     if (!card) return { pattern: null, cells: [] };
 
     const grid = card.numbers;
-    const isDaubed = (r: number, c: number) =>
-      (r === 2 && c === 2) || (grid[r][c] !== null && s.daubedNumbers.has(grid[r][c]!));
+    const calledSet = new Set(s.calledNumbers.map(c => c.number));
+    const isDaubed = (r: number, c: number) => {
+      if (r === 2 && c === 2) return true; // free space
+      if (grid[r][c] === null) return false;
+      const num = grid[r][c]!;
+      return s.daubedNumbers.has(num) && calledSet.has(num);
+    };
 
     // Full House
     if (grid.every((row, r) => row.every((_, c) => isDaubed(r, c)))) {
@@ -413,23 +418,6 @@ export function useGameState() {
   const claimBingo = useCallback((cardId: number) => {
     if (!claimLimiter.current.canAct()) return;
 
-    if (!validateGameIntegrity({ daubedNumbers: state.daubedNumbers, calledNumbers: state.calledNumbers })) {
-      hapticNotification('error');
-      // Only eliminate this specific card
-      setState(s => {
-        const newEliminated = new Set(s.eliminatedCardIds);
-        newEliminated.add(cardId);
-        const allEliminated = s.bingoCards.every(c => newEliminated.has(c.id));
-        return {
-          ...s,
-          eliminatedCardIds: newEliminated,
-          isEliminated: allEliminated,
-          playerMode: allEliminated ? 'eliminated' : s.playerMode,
-        };
-      });
-      return;
-    }
-
     const result = checkBingoForCard(cardId);
     if (result.pattern) {
       clearInterval(callRef.current);
@@ -450,7 +438,7 @@ export function useGameState() {
       }));
     } else {
       hapticNotification('error');
-      // Only eliminate this card
+      // Only eliminate this specific card
       setState(s => {
         const newEliminated = new Set(s.eliminatedCardIds);
         newEliminated.add(cardId);

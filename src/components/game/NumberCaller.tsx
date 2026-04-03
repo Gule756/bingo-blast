@@ -15,24 +15,24 @@ export function NumberCaller({ calledNumbers, compact }: NumberCallerProps) {
   if (compact) {
     return (
       <div className="space-y-1">
-        <div className="gradient-hero flex items-center justify-between rounded-lg px-3 py-1.5">
-          <span className="text-[10px] font-semibold text-primary-foreground/80">Current</span>
+        <div className="gradient-hero flex items-center justify-between rounded-lg px-3 py-2">
+          <span className="text-sm font-semibold text-primary-foreground/80">Current</span>
           <AnimatePresence mode="wait">
             <motion.span
               key={current.number}
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
-              className="inline-flex items-center justify-center rounded-full px-2.5 py-1 font-mono font-bold text-sm bg-bingo-g text-primary-foreground ring-2 ring-primary-foreground/30"
+              className="inline-flex items-center justify-center rounded-full px-3 py-1.5 font-mono font-bold text-lg bg-bingo-g text-primary-foreground ring-2 ring-primary-foreground/30"
             >
               {current.letter}-{current.number}
             </motion.span>
           </AnimatePresence>
         </div>
         {recent.length > 0 && (
-          <div className="flex items-center justify-center gap-1">
+          <div className="flex items-center justify-center gap-2">
             {recent.map(c => (
-              <span key={c.number} className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 font-mono font-bold text-[10px] ${getLetterColor(c.letter)} opacity-80`}>
+              <span key={c.number} className={`inline-flex items-center justify-center rounded-full px-3 py-1 font-mono font-bold text-sm ${getLetterColor(c.letter)} opacity-90`}>
                 {c.letter}-{c.number}
               </span>
             ))}
