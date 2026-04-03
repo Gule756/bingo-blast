@@ -1,6 +1,6 @@
 export type GamePhase = 'welcome' | 'stakeSelect' | 'deposit' | 'lobby' | 'warning' | 'game' | 'gameover' | 'profile';
 export type PlayerMode = 'player' | 'spectator' | 'eliminated';
-export type WinPattern = 'Row' | 'Column' | 'Diagonal' | 'Four Corners' | 'Full House' | null;
+export type WinPattern = 'Row' | 'Column' | 'Diagonal' | 'Four Corners' | 'Postage Stamp' | 'Outside Frame' | 'Full House' | null;
 
 export interface BingoCard {
   id: number;
