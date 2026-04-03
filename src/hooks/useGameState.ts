@@ -8,28 +8,52 @@ import { playerNameSchema, txHashSchema, numberSchema, RateLimiter } from '@/lib
 import { useTabSync } from './useTabSync';
 import { supabase } from '@/integrations/supabase/client';
 
-function generateBingoCard(stackId: number): BingoCard {
-  const ranges = [[1,15],[16,30],[31,45],[46,60],[61,75]];
-  const numbers: (number|null)[][] = [];
-  for (let col = 0; col < 5; col++) {
-    const [min, max] = ranges[col];
-    const pool = Array.from({length: max-min+1}, (_,i) => i+min);
-    const picked: (number|null)[] = [];
+// Fisher-Yates shuffle utility
+function fisherYatesShuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Column-restricted card generation with Fisher-Yates per column
+function generateBingoCard(stackId: number, existingCards: BingoCard[] = []): BingoCard {
+  const ranges: [number, number][] = [[1,15],[16,30],[31,45],[46,60],[61,75]];
+  let grid: (number|null)[][];
+  let attempts = 0;
+
+  do {
+    const columns: number[][] = ranges.map(([min, max]) => {
+      const pool = Array.from({length: max - min + 1}, (_, i) => i + min);
+      return fisherYatesShuffle(pool).slice(0, 5);
+    });
+    grid = [];
     for (let r = 0; r < 5; r++) {
-      const idx = Math.floor(Math.random() * pool.length);
-      picked.push(pool.splice(idx, 1)[0]);
+      const row: (number|null)[] = [];
+      for (let c = 0; c < 5; c++) {
+        row.push(r === 2 && c === 2 ? null : columns[c][r]);
+      }
+      grid.push(row);
     }
-    numbers.push(picked);
-  }
-  const grid: (number|null)[][] = [];
-  for (let r = 0; r < 5; r++) {
-    const row: (number|null)[] = [];
-    for (let c = 0; c < 5; c++) {
-      row.push(r === 2 && c === 2 ? null : numbers[c][r]);
-    }
-    grid.push(row);
-  }
+    attempts++;
+  } while (attempts < 10 && existingCards.some(ec => cardFingerprint(ec) === gridFingerprint(grid)));
+
   return { id: stackId, numbers: grid };
+}
+
+// Fingerprint for duplicate detection
+function gridFingerprint(grid: (number|null)[][]): string {
+  return grid.flat().filter(n => n !== null).join(',');
+}
+function cardFingerprint(card: BingoCard): string {
+  return gridFingerprint(card.numbers);
+}
+
+// Pre-shuffle all 75 numbers for fair calling (Fisher-Yates)
+function generateCallSequence(): number[] {
+  return fisherYatesShuffle(Array.from({length: 75}, (_, i) => i + 1));
 }
 
 const LOBBY_TIME = 30;
@@ -74,7 +98,8 @@ export function useGameState() {
 
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const callRef = useRef<ReturnType<typeof setInterval>>();
-  const usedNumbers = useRef<Set<number>>(new Set());
+  const callSequenceRef = useRef<number[]>([]);
+  const callIndexRef = useRef(0);
 
   const daubLimiter = useRef(new RateLimiter(10, 1000));
   const claimLimiter = useRef(new RateLimiter(2, 5000));
@@ -281,16 +306,20 @@ export function useGameState() {
           const totalCost = s.selectedStacks.size * s.stats.bet;
           const canPlay = hasStacks && s.user.balance >= totalCost;
           const mode = canPlay ? 'player' : 'spectator';
-          const cards = canPlay
-            ? Array.from(s.selectedStacks).map(id => generateBingoCard(id))
-            : [];
+          const generatedCards: BingoCard[] = [];
+          if (canPlay) {
+            Array.from(s.selectedStacks).forEach(id => {
+              generatedCards.push(generateBingoCard(id, generatedCards));
+            });
+          }
+            
           const newBalance = canPlay ? s.user.balance - totalCost : s.user.balance;
           return {
             ...s,
             timer: 0,
             phase: 'game',
             playerMode: mode,
-            bingoCards: cards,
+            bingoCards: generatedCards,
             calledNumbers: [],
             daubedNumbers: new Set([0]),
             isEliminated: false,
@@ -310,28 +339,28 @@ export function useGameState() {
     return () => clearInterval(timerRef.current);
   }, [state.phase === 'warning']);
 
-  // Game: call numbers
+  // Game: call numbers using pre-shuffled Fisher-Yates sequence
   useEffect(() => {
     if (state.phase !== 'game') return;
-    usedNumbers.current = new Set();
+    callSequenceRef.current = generateCallSequence();
+    callIndexRef.current = 0;
 
     const callNumber = () => {
       setState(s => {
-        if (usedNumbers.current.size >= 75) {
+        if (callIndexRef.current >= 75) {
           clearInterval(callRef.current);
           return { ...s, phase: 'gameover', winner: null, winningCells: [], winningCardId: null };
         }
 
-        if (s.dummyWinRound && usedNumbers.current.size === DUMMY_WIN_CALL) {
+        if (s.dummyWinRound && callIndexRef.current === DUMMY_WIN_CALL) {
           clearInterval(callRef.current);
           const dummyName = DUMMY_NAMES[Math.floor(Math.random() * DUMMY_NAMES.length)];
           hapticNotification('warning');
           return { ...s, phase: 'gameover', winner: dummyName, winningCells: [], winningCardId: null };
         }
 
-        let num: number;
-        do { num = Math.floor(Math.random() * 75) + 1; } while (usedNumbers.current.has(num));
-        usedNumbers.current.add(num);
+        const num = callSequenceRef.current[callIndexRef.current];
+        callIndexRef.current++;
         const called: CalledNumber = { number: num, letter: getLetterForNumber(num), timestamp: Date.now() };
         return {
           ...s,
@@ -411,6 +440,21 @@ export function useGameState() {
     if (isDaubed(0,0) && isDaubed(0,4) && isDaubed(4,0) && isDaubed(4,4)) {
       return { pattern: 'Four Corners', cells: [[0,0],[0,4],[4,0],[4,4]] };
     }
+    // Postage Stamp (2x2 in any corner)
+    const corners: [number, number][] = [[0,0],[0,3],[3,0],[3,3]];
+    for (const [sr, sc] of corners) {
+      if (isDaubed(sr,sc) && isDaubed(sr,sc+1) && isDaubed(sr+1,sc) && isDaubed(sr+1,sc+1)) {
+        return { pattern: 'Postage Stamp' as WinPattern, cells: [[sr,sc],[sr,sc+1],[sr+1,sc],[sr+1,sc+1]] };
+      }
+    }
+    // Outside Frame (all edge cells)
+    const frameCells: [number, number][] = [];
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+      if (r === 0 || r === 4 || c === 0 || c === 4) frameCells.push([r, c]);
+    }
+    if (frameCells.every(([r, c]) => isDaubed(r, c))) {
+      return { pattern: 'Outside Frame' as WinPattern, cells: frameCells };
+    }
     return { pattern: null, cells: [] };
   }, [state]);
 
@@ -422,10 +466,11 @@ export function useGameState() {
     if (result.pattern) {
       clearInterval(callRef.current);
       hapticNotification('success');
-      // Prize pool = total cards in game * bet * 0.9 (10% house fee)
-      // At minimum, player's own cards contribute to the pot
-      const totalCardsInGame = Math.max(state.stats.players, 1) * state.bingoCards.length;
-      const prize = state.stats.bet * totalCardsInGame * 0.9;
+      // Prize pool: each player pays bet * their_card_count. Total = sum of all entries * 0.9
+      // We know: this player's cards + (other players * 1 card assumed average)
+      const otherPlayers = Math.max(state.stats.players - 1, 0);
+      const totalEntryFees = (state.bingoCards.length * state.stats.bet) + (otherPlayers * state.stats.bet);
+      const prize = totalEntryFees * 0.9;
       setState(s => ({
         ...s,
         phase: 'gameover',
