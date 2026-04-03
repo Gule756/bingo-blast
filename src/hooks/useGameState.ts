@@ -312,7 +312,7 @@ export function useGameState() {
               generatedCards.push(generateBingoCard(id, generatedCards));
             });
           }
-            : [];
+            
           const newBalance = canPlay ? s.user.balance - totalCost : s.user.balance;
           return {
             ...s,
