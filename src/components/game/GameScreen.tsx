@@ -23,54 +23,59 @@ export function GameScreen({ state, daubedCount, onDaub, onClaim, onClose }: Gam
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
+      
       {/* Top Bar */}
-      <div className="w-full shrink-0 block relative z-[100]">
+      <div className="w-full shrink-0 relative z-[100] border-b border-border/10">
         <StatsBar stats={state.stats} balance={state.user.balance} onClose={onClose} />
       </div>
 
       <div className="flex flex-row flex-1 overflow-hidden">
-        {/* Sidebar - Visible only on larger screens */}
-        <div className="w-48 flex-shrink-0 border-r border-border/50 hidden md:block">
+        
+        {/* SIDEBAR: Always visible, but narrower on small screens 
+            - w-12: Small screens (icons only or thin view)
+            - sm:w-24: Medium screens
+            - md:w-48: Desktop
+        */}
+        <div className="w-16 sm:w-24 md:w-48 flex-shrink-0 border-r border-border/50 overflow-y-auto bg-card/30">
           <BoardSidebar calledNumbers={state.calledNumbers} />
         </div>
 
         {/* Main Content Area */}
-        <div className="flex flex-col flex-1 overflow-y-auto p-4">
-          <NumberCaller calledNumbers={state.calledNumbers} />
+        <div className="flex flex-col flex-1 overflow-hidden p-1 sm:p-2 md:p-6">
+          
+          {/* Number Caller */}
+          <div className="w-full max-w-4xl mx-auto shrink-0 mb-1 md:mb-2">
+            <NumberCaller calledNumbers={state.calledNumbers} />
+          </div>
 
-          {/* CARD WRAPPER: 
-              - overflow-x-auto: Allows swiping left/right if cards are too wide.
-              - justify-start: Ensures cards start from the left when scrolling is needed.
-          */}
-          <div className="flex flex-row items-start justify-start md:justify-center gap-6 mt-6 overflow-x-auto pb-8 px-2">
+          {/* CARD CONTAINER: Now shares width with the sidebar */}
+          <div className="flex flex-row items-stretch justify-center gap-1 md:gap-4 w-full max-w-6xl mx-auto px-1 flex-1 min-h-0">
             {state.bingoCards.map(card => {
               const isEliminated = state.eliminatedCardIds.has(card.id);
               
               return (
-                /* THE KEY FIX: 
-                   We use 'style' to force 240px (w-60). 
-                   flexShrink: 0 prevents the browser from squishing the card.
-                */
                 <div 
                   key={card.id} 
-                  style={{ width: '240px', minWidth: '240px', flexShrink: 0 }}
-                  className="flex flex-col items-center gap-3"
+                  className="flex flex-1 flex-col justify-between gap-1 md:gap-3 min-w-0 max-w-[300px] h-full pb-1 md:pb-2"
                 >
-                  <BingoBoard
-                    card={card}
-                    daubedNumbers={state.daubedNumbers}
-                    isEliminated={isEliminated}
-                    onDaub={onDaub}
-                    /* Removed w-full max-w-[90%] to stop layout fighting */
-                    className="shadow-xl"
-                  />
+                  {/* The Board: Shrinks vertically to ensure the button is always visible */}
+                  <div className="flex-1 min-h-0 w-full">
+                    <BingoBoard
+                      card={card}
+                      daubedNumbers={state.daubedNumbers}
+                      isEliminated={isEliminated}
+                      onDaub={onDaub}
+                      className="h-full w-full shadow-lg"
+                    />
+                  </div>
                   
+                  {/* The Button: shrink-0 pins it to the bottom */}
                   {!isEliminated && !allEliminated && (
                     <button
                       onClick={() => handleClaim(card.id)}
                       disabled={daubedCount < 5}
-                      className="gradient-winner w-full py-4 rounded-xl font-black text-white shadow-xl active:scale-95 disabled:opacity-30 transition-all uppercase tracking-widest text-sm"
+                      className="gradient-winner shrink-0 w-full py-2 md:py-4 rounded-lg md:rounded-xl font-black text-white shadow-xl active:scale-95 disabled:opacity-30 transition-all uppercase tracking-tight md:tracking-widest text-[9px] sm:text-[10px] md:text-sm"
                     >
                       Bingo! {daubedCount < 5 ? `(${daubedCount}/5)` : ''}
                     </button>
