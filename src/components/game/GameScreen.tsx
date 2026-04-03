@@ -24,33 +24,32 @@ export function GameScreen({ state, daubedCount, onDaub, onClaim, onClose }: Gam
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
       
-      {/* 1. TOP STATS BAR (Fixed) */}
-      <div className="w-full shrink-0 relative z-[100] border-b border-border/10">
+      {/* 1. TOP STATS BAR */}
+      <div className="w-full shrink-0 relative z-[100] border-b border-white/5">
         <StatsBar stats={state.stats} balance={state.user.balance} onClose={onClose} />
       </div>
 
-      {/* 2. THE MAIN WRAPPER 
-          Mobile: Vertical Stack (flex-col)
-          Desktop: Sidebar on left (md:flex-row)
-      */}
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         
-        {/* SIDEBAR: Horizontal scroll strip on mobile, vertical on desktop */}
-        <div className="w-full md:w-48 h-14 md:h-full shrink-0 border-b md:border-b-0 md:border-r border-border/50 bg-card/20 overflow-x-auto md:overflow-y-auto no-scrollbar">
+        {/* 2. CALLED NUMBERS STRIP 
+            FORCED: h-12 on mobile ensures it stays a thin strip at the top.
+        */}
+        <div className="w-full md:w-48 h-12 md:h-full shrink-0 border-b md:border-b-0 md:border-r border-white/5 bg-black/20 overflow-x-auto md:overflow-y-auto no-scrollbar">
           <BoardSidebar calledNumbers={state.calledNumbers} />
         </div>
 
-        {/* 3. GAME CONTENT AREA (Caller + Cards) */}
+        {/* 3. MAIN GAME CONTENT */}
         <div className="flex flex-col flex-1 overflow-hidden p-1 md:p-4">
           
-          {/* NUMBER CALLER: Pushed to the top */}
-          <div className="w-full max-w-4xl mx-auto shrink-0 mb-2">
+          {/* 4. NUMBER CALLER 
+              FORCED: max-h-[18vh] prevents this box from pushing the boards off-screen.
+          */}
+          <div className="w-full max-w-2xl mx-auto shrink-0 mb-1 md:mb-4 max-h-[18vh] md:max-h-none overflow-hidden">
             <NumberCaller calledNumbers={state.calledNumbers} />
           </div>
 
-          {/* CARDS CONTAINER: 
-              - flex-1 and min-h-0: This forces the cards to take the remaining height 
-                and shrink their internal boards if the screen is too short.
+          {/* 5. CARDS CONTAINER 
+              flex-1 + min-h-0: This tells the boards "take every pixel that is left."
           */}
           <div className="flex flex-row items-stretch justify-center gap-1 md:gap-4 w-full max-w-6xl mx-auto flex-1 min-h-0 px-1">
             {state.bingoCards.map(card => {
@@ -61,23 +60,21 @@ export function GameScreen({ state, daubedCount, onDaub, onClaim, onClose }: Gam
                   key={card.id} 
                   className="flex flex-1 flex-col justify-between gap-1 md:gap-3 min-w-0 max-w-[350px] h-full pb-1"
                 >
-                  {/* The Board: Takes all available space, shrinking its grid to fit */}
                   <div className="flex-1 min-h-0 w-full">
                     <BingoBoard
                       card={card}
                       daubedNumbers={state.daubedNumbers}
                       isEliminated={isEliminated}
                       onDaub={onDaub}
-                      className="h-full w-full"
+                      className="h-full w-full shadow-2xl"
                     />
                   </div>
                   
-                  {/* The Button: shrink-0 pins it to the bottom of the visible area */}
                   {!isEliminated && !allEliminated && (
                     <button
                       onClick={() => handleClaim(card.id)}
                       disabled={daubedCount < 5}
-                      className="gradient-winner shrink-0 w-full py-2 md:py-4 rounded-lg md:rounded-xl font-black text-white shadow-lg active:scale-95 disabled:opacity-30 transition-all uppercase text-[10px] md:text-sm tracking-tighter md:tracking-widest"
+                      className="gradient-winner shrink-0 w-full py-2 md:py-4 rounded-lg md:rounded-xl font-black text-white shadow-xl active:scale-95 disabled:opacity-30 transition-all uppercase text-[10px] md:text-sm tracking-tighter"
                     >
                       Bingo! {daubedCount < 5 ? `(${daubedCount}/5)` : ''}
                     </button>
