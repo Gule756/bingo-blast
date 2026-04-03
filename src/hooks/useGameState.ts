@@ -319,7 +319,7 @@ export function useGameState() {
             timer: 0,
             phase: 'game',
             playerMode: mode,
-            bingoCards: cards,
+            bingoCards: generatedCards,
             calledNumbers: [],
             daubedNumbers: new Set([0]),
             isEliminated: false,
