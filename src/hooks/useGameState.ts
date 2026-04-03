@@ -306,8 +306,12 @@ export function useGameState() {
           const totalCost = s.selectedStacks.size * s.stats.bet;
           const canPlay = hasStacks && s.user.balance >= totalCost;
           const mode = canPlay ? 'player' : 'spectator';
-          const cards = canPlay
-            ? Array.from(s.selectedStacks).map(id => generateBingoCard(id))
+          const generatedCards: BingoCard[] = [];
+          if (canPlay) {
+            Array.from(s.selectedStacks).forEach(id => {
+              generatedCards.push(generateBingoCard(id, generatedCards));
+            });
+          }
             : [];
           const newBalance = canPlay ? s.user.balance - totalCost : s.user.balance;
           return {
