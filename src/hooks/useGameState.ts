@@ -339,28 +339,28 @@ export function useGameState() {
     return () => clearInterval(timerRef.current);
   }, [state.phase === 'warning']);
 
-  // Game: call numbers
+  // Game: call numbers using pre-shuffled Fisher-Yates sequence
   useEffect(() => {
     if (state.phase !== 'game') return;
-    usedNumbers.current = new Set();
+    callSequenceRef.current = generateCallSequence();
+    callIndexRef.current = 0;
 
     const callNumber = () => {
       setState(s => {
-        if (usedNumbers.current.size >= 75) {
+        if (callIndexRef.current >= 75) {
           clearInterval(callRef.current);
           return { ...s, phase: 'gameover', winner: null, winningCells: [], winningCardId: null };
         }
 
-        if (s.dummyWinRound && usedNumbers.current.size === DUMMY_WIN_CALL) {
+        if (s.dummyWinRound && callIndexRef.current === DUMMY_WIN_CALL) {
           clearInterval(callRef.current);
           const dummyName = DUMMY_NAMES[Math.floor(Math.random() * DUMMY_NAMES.length)];
           hapticNotification('warning');
           return { ...s, phase: 'gameover', winner: dummyName, winningCells: [], winningCardId: null };
         }
 
-        let num: number;
-        do { num = Math.floor(Math.random() * 75) + 1; } while (usedNumbers.current.has(num));
-        usedNumbers.current.add(num);
+        const num = callSequenceRef.current[callIndexRef.current];
+        callIndexRef.current++;
         const called: CalledNumber = { number: num, letter: getLetterForNumber(num), timestamp: Date.now() };
         return {
           ...s,
