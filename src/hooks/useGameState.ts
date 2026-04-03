@@ -98,7 +98,8 @@ export function useGameState() {
 
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const callRef = useRef<ReturnType<typeof setInterval>>();
-  const usedNumbers = useRef<Set<number>>(new Set());
+  const callSequenceRef = useRef<number[]>([]);
+  const callIndexRef = useRef(0);
 
   const daubLimiter = useRef(new RateLimiter(10, 1000));
   const claimLimiter = useRef(new RateLimiter(2, 5000));
