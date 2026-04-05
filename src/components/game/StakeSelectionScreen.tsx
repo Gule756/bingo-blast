@@ -17,7 +17,7 @@ interface StakeSelectionScreenProps {
 }
 
 export function StakeSelectionScreen({
-  balance, userName, onSelectStake, onCreateGame, onJoinGame, onDeposit, onProfile
+  balance, userName, onSelectStake, onCreateGame, onJoinGame, onDeposit, onProfile, onLogout
 }: StakeSelectionScreenProps) {
   const [availableGames, setAvailableGames] = useState<GameRoom[]>([]);
   const [selectedStake, setSelectedStake] = useState<number | null>(null);
