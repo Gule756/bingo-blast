@@ -13,6 +13,7 @@ interface StakeSelectionScreenProps {
   onJoinGame: (gameId: string, stake: number) => void;
   onDeposit: () => void;
   onProfile: () => void;
+  onLogout: () => void;
 }
 
 export function StakeSelectionScreen({
