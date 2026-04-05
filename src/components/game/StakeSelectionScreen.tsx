@@ -118,6 +118,9 @@ export function StakeSelectionScreen({
           <button onClick={onProfile} className="rounded-lg bg-secondary p-2">
             <User className="h-4 w-4 text-foreground" />
           </button>
+          <button onClick={onLogout} className="rounded-lg bg-destructive/10 p-2" title="Logout">
+            <LogOut className="h-4 w-4 text-destructive" />
+          </button>
         </div>
       </div>
 
