@@ -49,6 +49,7 @@ function GameRouter() {
           onJoinGame={(gameId, stake) => joinGame(gameId, stake)}
           onDeposit={() => setPhase('deposit')}
           onProfile={() => setPhase('profile')}
+          onLogout={logout}
         />
       );
 
